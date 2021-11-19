@@ -1,5 +1,3 @@
-package final_project;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -42,9 +40,9 @@ public class FileDeCipher {
 	}
 
 	public static IvParameterSpec generateIv() {
-	    byte[] iv = new byte[16];
-	    new SecureRandom().nextBytes(iv);
-	    return new IvParameterSpec(iv);
+		byte[] iv = new byte[16];
+		new SecureRandom().nextBytes(iv);
+		return new IvParameterSpec(iv);
 	}
 
 	public static SecretKey getKeyFromPassword(char[] password)
@@ -97,9 +95,9 @@ public class FileDeCipher {
 		inputStream.read(hash);
 		byte[] ivB = new byte[16];
 		inputStream.read(ivB);
-		
+
 		cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivB));
-		
+
 		byte[] buffer = new byte[64];
 		int bytesRead;
 		while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -108,17 +106,18 @@ public class FileDeCipher {
 				outputStream.write(output);
 			}
 		}
-		byte[] outputBytes = cipher.doFinal();
-		if (outputBytes != null) {
-			outputStream.write(outputBytes);
-		}
-		inputStream.close();
-		outputStream.close();
-		byte[] expectedHash = hash(outputFile);
-		if(hash.length != expectedHash.length) {
-			System.out.println("hashes lengths are not equal: hash.length = " + hash.length + ", expectedHash.length = " + expectedHash.length);
+		try {
+			byte[] outputBytes = cipher.doFinal();
+			if (outputBytes != null) {
+				outputStream.write(outputBytes);
+			}
+		} catch (BadPaddingException | IllegalBlockSizeException e) {
 			return false;
+		} finally {
+			inputStream.close();
+			outputStream.close();
 		}
+		byte[] expectedHash = hash(outputFile);
 		for (int i = 0; i < expectedHash.length; i++) {
 			if(hash[i] != expectedHash[i]) {
 				return false;
@@ -181,6 +180,8 @@ public class FileDeCipher {
 				sc.close();
 			}
 			break;
+		default:
+			System.out.println("Please provide a valid option.");
 		}
 		sc.close();
 	}
