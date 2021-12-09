@@ -1,3 +1,5 @@
+package final_project;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -22,11 +24,23 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * This class contains a set of methods that conform a command line utility 
+ * which allows the user to encrypt and decrypt files.
+ * @author Daniel Villota
+ * @author Camilo Enriquez
+ * @author Jose Restrepo
+ */
 public class FileDeCipher {
 
 	private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
 	private static final String SALT = "ABCDEF123456";
 
+	/**
+	 * Produces the SHA-1 hash for a given file.
+	 * @param file	the file that contains the data to be hashed.
+	 * @return a byte array with the correspondent hash. The array length is 20 bytes.
+	 */
 	public static byte[] hash(File file) throws IOException, NoSuchAlgorithmException {
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
 		InputStream fis = new FileInputStream(file);
@@ -39,21 +53,42 @@ public class FileDeCipher {
 		return digest.digest();
 	}
 
+	/**
+	 * Generates an inicialization vector (IV) with an instance of SecureRandom.
+	 * @return an instance of IvParameterSpec built with an array of securely generated random bytes.
+	 */
 	public static IvParameterSpec generateIv() {
 		byte[] iv = new byte[16];
 		new SecureRandom().nextBytes(iv);
 		return new IvParameterSpec(iv);
 	}
 
+	/**
+	 * Produces a SecretKey object given a password using PBKDF2 as key derivation function 
+	 * and AES scheme.
+	 * Password length is not checked.
+	 * @param password	the password to be used to build the key.
+	 * @return an instance of SecretKey. 
+	 * This key has a length of 128 bits and it's 
+	 * formed after 65536 iterations of PBKDF2, 
+	 * its salt is a hardcoded string.
+	 */
 	public static SecretKey getKeyFromPassword(char[] password)
 			throws NoSuchAlgorithmException, InvalidKeySpecException {
-
 		SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
 		KeySpec spec = new PBEKeySpec(password, SALT.getBytes(), 65536, 128);
 		SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
 		return secret;
 	}
 
+	/**
+	 * Encrypts a file using a given key. This method writes the result in the given output file.
+	 * @param key			the key that will be used in the encryption process. It's an instance of SecretKey.
+	 * @param inputFile		the file to encrypt.
+	 * @param outputFile	the file where the encrypted data will be stored among it's hash and it's IV.
+	 * @see generateKeyFromPassword
+	 * @see hash
+	 */
 	public static void encryptFile(SecretKey key, File inputFile, File outputFile) throws IOException, NoSuchPaddingException,
 	NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException,
 	BadPaddingException, IllegalBlockSizeException {
@@ -83,6 +118,14 @@ public class FileDeCipher {
 		outputStream.close();
 	}
 
+	/**
+	 * Decrypts a file using a given key. This method writes the result in the given output file.
+	 * @param key			the key that will be used in the decryption process. It's an instance of SecretKey.
+	 * @param inputFile		the file to decrypt.
+	 * @param outputFile	the file where the decrypted data will be stored.
+	 * @see generateKeyFromPassword
+	 * @see hash
+	 */
 	public static boolean decryptFile(SecretKey key, File inputFile, File outputFile) throws IOException, NoSuchPaddingException,
 	NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException,
 	BadPaddingException, IllegalBlockSizeException {
@@ -126,6 +169,11 @@ public class FileDeCipher {
 		return true;
 	}
 
+	/**
+	 * Prints a menu that allows the user to interact with the program. 
+	 * It provides 2 options: Encryption and decryption of a file.
+	 * @param args default parameter for main method. It has no effect on the program.
+	 */
 	public static void main(String[] args) throws InvalidKeyException, NoSuchPaddingException, 
 	NoSuchAlgorithmException, InvalidAlgorithmParameterException, 
 	BadPaddingException, IllegalBlockSizeException, 
